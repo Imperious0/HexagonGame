@@ -65,7 +65,9 @@ public class GridMechanics : MonoBehaviour
     {
         currentMotion = mCapture.CurrentMotion;
 
-        if ((currentMotion == Motions.None))
+        Debug.LogError(currentMotion);
+
+        if ((currentMotion == Motions.None) || isNeedRotation)
             return;
 
         if (currentMotion == Motions.Tap)
@@ -80,52 +82,36 @@ public class GridMechanics : MonoBehaviour
             {
                 if (selectionGroup.transform.childCount == 3)
                 {
-                    float angle = Vector2.SignedAngle(mCapture.CurrentClick - Camera.main.WorldToScreenPoint(selectionGroup.transform.position), Vector2.right);
+                    Vector3 mouseVectorRelative = (mCapture.CurrentEndClick + mCapture.CurrentClick);
+                    Vector3 groupCenter = Camera.main.WorldToScreenPoint(selectionGroup.transform.position);
+                    Vector3 relativeVector = ((mouseVectorRelative) - groupCenter * 2f).normalized;
+
+                    //Debug.LogError("Start Point :" + mCapture.CurrentClick + " " + " End Point: " + mCapture.CurrentEndClick);
+                    float relativeVectorAngle = Vector2.SignedAngle(relativeVector, Vector2.right);
+                    //Debug.LogError("Center of mPoint: " + ((mCapture.CurrentEndClick - mCapture.CurrentClick) / 2f));
+                    //Debug.LogError("Vector of mPoint: " + (((mCapture.CurrentEndClick - mCapture.CurrentClick) / 2f) - Camera.main.WorldToScreenPoint(selectionGroup.transform.position)));
+ 
+                    
+                    Debug.LogError("Angle of relativeVector: " + relativeVectorAngle);
                     isNeedRotation = true;
-                    if (currentMotion == Motions.Down)
+
+                    Vector2 mouseVector = (mCapture.CurrentEndClick - mCapture.CurrentClick).normalized;
+                    float relativeAngle = Vector2.SignedAngle(mouseVector, relativeVector);
+
+                    Debug.LogError("Angle Of Mouse Vector around RelativeVector : " + relativeAngle);
+
+
+                    if(relativeAngle < 0) 
                     {
-                        if (angle < 45 && angle > -45)
-                        {
-                            isClockwiseRotation = true;
-                        }
-                        else
-                        {
-                            isClockwiseRotation = false;
-                        }
+                        //Left Side Sign
+                        isClockwiseRotation = false;
                     }
-                    else if (currentMotion == Motions.Up)
+                    else
                     {
-                        if (angle < 45 && angle > -45)
-                        {
-                            isClockwiseRotation = false;
-                        }
-                        else
-                        {
-                            isClockwiseRotation = true;
-                        }
+                        //Right Side Sign
+                        isClockwiseRotation = true;
                     }
-                    else if (currentMotion == Motions.Right)
-                    {
-                        if (angle < 0)
-                        {
-                            isClockwiseRotation = true;
-                        }
-                        else
-                        {
-                            isClockwiseRotation = false;
-                        }
-                    }
-                    else if (currentMotion == Motions.Left)
-                    {
-                        if (angle < 0)
-                        {
-                            isClockwiseRotation = false;
-                        }
-                        else
-                        {
-                            isClockwiseRotation = true;
-                        }
-                    }
+                   
                     StartCoroutine(rotateGroup());
                 }
             }
@@ -147,8 +133,15 @@ public class GridMechanics : MonoBehaviour
 
             float clickedAngle = Vector2.SignedAngle(hit.point - objectHit.position, Vector2.right);
 
-            if (selectionGroup != null)
+            if (selectionGroup != null) 
+            {
+                foreach(Transform to in selectionGroup.transform.GetComponentsInChildren<Transform>())
+                {
+                    to.SetParent(gridSystem.transform, true);
+                }
                 GameObject.Destroy(selectionGroup);
+            }
+               
 
             selectionGroup = new GameObject("SelectionGroup");
             selectionGroup.transform.position = Vector3.zero;
@@ -409,7 +402,7 @@ public class GridMechanics : MonoBehaviour
                     selectionGroup.transform.Rotate(Vector3.forward, gSetting.GameSpeed);
 
                 yield return new WaitForFixedUpdate();
-                if( Mathf.Abs(this.selectionGroup.transform.rotation.eulerAngles.z % 120) < 0.001f)
+                if( Mathf.Abs(this.selectionGroup.transform.rotation.eulerAngles.z % 120) < 0.01f)
                 {
                     TileData tmp;
                     tmp = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
@@ -425,13 +418,15 @@ public class GridMechanics : MonoBehaviour
                     yield return new WaitForSeconds(0.1f);
                     if (checkForBubble()) 
                     {
-                        isNeedRotation = false;
-                        isClockwiseRotation = false;
+                        
+                        
                         break;
                     }
                 }
-            } while (!(Mathf.Abs( this.selectionGroup.transform.rotation.eulerAngles.z % 360) < 0.001f));
-                
+            } while (!(Mathf.Abs( this.selectionGroup.transform.rotation.eulerAngles.z % 360) < 0.01f));
+            selectionGroup.transform.rotation = Quaternion.identity;
+            isNeedRotation = false;
+            isClockwiseRotation = false;
         }
     }
 

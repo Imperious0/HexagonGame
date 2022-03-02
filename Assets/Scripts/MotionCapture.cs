@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Motions { None, Tap, Up, Down, Left, Right };
+public enum Motions { None, Tap, Up, Down, Left, Right, Swipe }
 public class MotionCapture : MonoBehaviour
 {
     [SerializeField]
@@ -17,6 +17,7 @@ public class MotionCapture : MonoBehaviour
     public Motions CurrentMotion { get { Motions tmp = currentMotion; currentMotion = Motions.None; return tmp; } }
 
     public Vector3 CurrentClick { get { return firstPressPos; } }
+    public Vector3 CurrentEndClick { get { return secondPressPos; } }
 
     // Start is called before the first frame update
     void Start()
@@ -55,6 +56,10 @@ public class MotionCapture : MonoBehaviour
 
                 currentSwipe.Normalize();
 
+                currentMotion = Motions.Swipe;
+
+                /*
+
                 // Swipe up
                 if (currentSwipe.y > 0 && currentSwipe.x > -0.5f && currentSwipe.x < 0.5f) {
                     currentMotion = Motions.Up;
@@ -68,6 +73,7 @@ public class MotionCapture : MonoBehaviour
                     // Swipe right
                     currentMotion = Motions.Right;
                 }
+                */
             }
         }
         else
@@ -92,9 +98,10 @@ public class MotionCapture : MonoBehaviour
                 currentMotion = Motions.Tap;
                 return;
             }
-
             currentSwipe.Normalize();
 
+            currentMotion = Motions.Swipe;
+            /*
             if (currentSwipe.y > 0 && currentSwipe.x > -0.5f && currentSwipe.x < 0.5f)
             {
                 // Swipe up
@@ -112,6 +119,7 @@ public class MotionCapture : MonoBehaviour
                 // Swipe right
                 currentMotion = Motions.Right;
             }
+            */
         }
 #endif
     }
