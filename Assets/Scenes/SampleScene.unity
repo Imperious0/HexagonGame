@@ -314,7 +314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 115d764b9518ee44dac2fabe1ab9d8ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minSwipeLength: 200
+  minSwipeLength: 100
 --- !u!1 &1137539584
 GameObject:
   m_ObjectHideFlags: 0
@@ -365,4 +365,3 @@ MonoBehaviour:
   - {fileID: 6641033629426355808, guid: 3fa9a0dcaed2fee4b84e96d97bf6a71c, type: 3}
   - {fileID: 787698505453924222, guid: 4f528687cb76a7643925706b5a49a67f, type: 3}
   - {fileID: 241497878980645296, guid: ae8e2c44faa65594c9368ea27de6ee9b, type: 3}
-  mCapture: {fileID: 0}
