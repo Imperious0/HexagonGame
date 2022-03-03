@@ -51,11 +51,13 @@ public class GridMechanics : MonoBehaviour
                 int selectedTile = UnityEngine.Random.Range(0, tiles.Length);
                 GameObject tmpObj = Instantiate(tiles[selectedTile], gridSystem.transform, false);
                 tmpObj.name = i + "x" + j;
-                tmpObj.transform.position = new Vector3(gSetting.GridBaseIncrement.x*j, gSetting.GridBaseIncrement.y * i + (j % 2 == 1 ? -0.5f : 0f), 0);
+                tmpObj.transform.position = new Vector3(gSetting.GridBaseIncrement.x * j, gSetting.GridBaseIncrement.y * i + (j % 2 == 1 ? -0.5f : 0f), 0);
                 gridTiles[i, j] = new TileData();
                 gridTiles[i, j].tile = tmpObj;
-                gridTiles[i, j].worldPosition = tmpObj.transform.position;
+                gridTiles[i, j].tileColor = gSetting.GameColors[UnityEngine.Random.Range(0, gSetting.GameColors.Length)];
+                gridTiles[i, j].tile.GetComponent<SpriteRenderer>().color = gridTiles[i, j].tileColor;
                 gridTiles[i, j].gridPosition = new Vector2(i,j);
+                gridTiles[i, j].Score = 5;
             }
         }
         //Try to Center Grid.
@@ -65,7 +67,7 @@ public class GridMechanics : MonoBehaviour
     {
         currentMotion = mCapture.CurrentMotion;
 
-        Debug.LogError(currentMotion);
+        //Debug.LogError(currentMotion);
 
         if ((currentMotion == Motions.None) || isNeedRotation)
             return;
@@ -126,8 +128,6 @@ public class GridMechanics : MonoBehaviour
         if (Physics.Raycast(ray, out hit, Mathf.Infinity))
         {
             Transform objectHit = hit.transform;
-
-            objectHit.gameObject.GetComponent<SpriteRenderer>().color = gSetting.GameColors[UnityEngine.Random.Range(0, gSetting.GameColors.Length)];
 
             //TODO now find which will groupped for flipping.
 
@@ -205,9 +205,6 @@ public class GridMechanics : MonoBehaviour
                 secondPos = clCount[0];
                 thirdPos = clCount[1];
             }
-
-            gridTiles[(int)secondPos.x, (int)secondPos.y].tile.GetComponent<SpriteRenderer>().color = gSetting.GameColors[UnityEngine.Random.Range(0, gSetting.GameColors.Length)];
-            gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.GetComponent<SpriteRenderer>().color = gSetting.GameColors[UnityEngine.Random.Range(0, gSetting.GameColors.Length)];
 
             Vector3 centerOfGroup = gridTiles[(int)firstPos.x, (int)firstPos.y].tile.transform.position + gridTiles[(int)secondPos.x, (int)secondPos.y].tile.transform.position + gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.transform.position;
             centerOfGroup /= 3;
@@ -402,18 +399,46 @@ public class GridMechanics : MonoBehaviour
                     selectionGroup.transform.Rotate(Vector3.forward, gSetting.GameSpeed);
 
                 yield return new WaitForFixedUpdate();
-                if( Mathf.Abs(this.selectionGroup.transform.rotation.eulerAngles.z % 120) < 0.01f)
+                if( Mathf.Abs(((isClockwiseRotation ? -360f : 0f) + this.selectionGroup.transform.rotation.eulerAngles.z) % 120f) < 0.1f)
                 {
-                    TileData tmp;
-                    tmp = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
 
-                    gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
-                    gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
-                    gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = tmp;
+                    if (isClockwiseRotation) 
+                    {
+                        TileData tmp;
+                        tmp = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
 
-                    selectionGroup.transform.GetChild(0).name = selectedTiles[2].x + "x" + selectedTiles[2].y;
-                    selectionGroup.transform.GetChild(1).name = selectedTiles[0].x + "x" + selectedTiles[0].y;
-                    selectionGroup.transform.GetChild(2).name = selectedTiles[1].x + "x" + selectedTiles[1].y;
+                        gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
+                        gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
+                        gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = tmp;
+
+                        selectionGroup.transform.GetChild(0).name = selectedTiles[1].x + "x" + selectedTiles[1].y;
+                        selectionGroup.transform.GetChild(1).name = selectedTiles[2].x + "x" + selectedTiles[2].y;
+                        selectionGroup.transform.GetChild(2).name = selectedTiles[0].x + "x" + selectedTiles[0].y;
+                        Vector2 tmpVector = selectedTiles[2];
+
+                        selectedTiles[2] = selectedTiles[0];
+                        selectedTiles[0] = selectedTiles[1];
+                        selectedTiles[1] = tmpVector;
+                    }
+                    else 
+                    {
+                        TileData tmp;
+                        tmp = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
+
+                        gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
+                        gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
+                        gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = tmp;
+
+                        selectionGroup.transform.GetChild(0).name = selectedTiles[2].x + "x" + selectedTiles[2].y;
+                        selectionGroup.transform.GetChild(1).name = selectedTiles[0].x + "x" + selectedTiles[0].y;
+                        selectionGroup.transform.GetChild(2).name = selectedTiles[1].x + "x" + selectedTiles[1].y;
+                        Vector2 tmpVector = selectedTiles[1];
+
+                        selectedTiles[1] = selectedTiles[0];
+                        selectedTiles[0] = selectedTiles[2];
+                        selectedTiles[2] = tmpVector;
+                    }
+                    
 
                     yield return new WaitForSeconds(0.1f);
                     if (checkForBubble()) 
@@ -423,7 +448,7 @@ public class GridMechanics : MonoBehaviour
                         break;
                     }
                 }
-            } while (!(Mathf.Abs( this.selectionGroup.transform.rotation.eulerAngles.z % 360) < 0.01f));
+            } while (!(Mathf.Abs( this.selectionGroup.transform.rotation.eulerAngles.z % 360f) < 0.1f));
             selectionGroup.transform.rotation = Quaternion.identity;
             isNeedRotation = false;
             isClockwiseRotation = false;
