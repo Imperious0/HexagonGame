@@ -270,8 +270,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 6
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -365,3 +365,4 @@ MonoBehaviour:
   - {fileID: 6641033629426355808, guid: 3fa9a0dcaed2fee4b84e96d97bf6a71c, type: 3}
   - {fileID: 787698505453924222, guid: 4f528687cb76a7643925706b5a49a67f, type: 3}
   - {fileID: 241497878980645296, guid: ae8e2c44faa65594c9368ea27de6ee9b, type: 3}
+  selectionGroupPrefab: {fileID: 4169822037917793540, guid: 9e04b4de2184ec64fb7fc12d229139f3, type: 3}

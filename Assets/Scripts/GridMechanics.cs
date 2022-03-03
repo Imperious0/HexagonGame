@@ -17,6 +17,9 @@ public class GridMechanics : MonoBehaviour
     [SerializeField]
     private GameObject[] tiles;
 
+    [SerializeField]
+    private GameObject selectionGroupPrefab;
+
 
     private MotionCapture mCapture;
     private Motions currentMotion;
@@ -35,6 +38,7 @@ public class GridMechanics : MonoBehaviour
         selectedTiles = new Vector2[3];
         InitializeGrid();
 
+    
     }
     private void Update()
     {
@@ -50,6 +54,7 @@ public class GridMechanics : MonoBehaviour
             {
                 int selectedTile = UnityEngine.Random.Range(0, tiles.Length);
                 GameObject tmpObj = Instantiate(tiles[selectedTile], gridSystem.transform, false);
+                tmpObj.transform.GetChild(0).gameObject.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 0);
                 tmpObj.name = i + "x" + j;
                 tmpObj.transform.position = new Vector3(gSetting.GridBaseIncrement.x * j, gSetting.GridBaseIncrement.y * i + (j % 2 == 1 ? -0.5f : 0f), 0);
                 gridTiles[i, j] = new TileData();
@@ -137,17 +142,26 @@ public class GridMechanics : MonoBehaviour
             {
                 foreach(Transform to in selectionGroup.transform.GetComponentsInChildren<Transform>())
                 {
-                    to.SetParent(gridSystem.transform, true);
+                    if (to.gameObject.CompareTag("Tile")) 
+                    {
+                        to.SetParent(gridSystem.transform, true);
+                        to.position = new Vector3(to.position.x, to.position.y, 0);
+                    }
+                        
+
+                    if(to.gameObject.CompareTag("TileBackmask"))
+                        to.gameObject.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 0);
                 }
                 GameObject.Destroy(selectionGroup);
             }
                
 
-            selectionGroup = new GameObject("SelectionGroup");
+            selectionGroup = Instantiate(selectionGroupPrefab, null, false);
             selectionGroup.transform.position = Vector3.zero;
             selectionGroup.transform.rotation = Quaternion.identity;
 
             selectionGroup.transform.SetParent(gridSystem.transform, false);
+
 
             Vector2 firstPos = new Vector2(int.Parse(objectHit.gameObject.name.Split('x')[0]), int.Parse(objectHit.gameObject.name.Split('x')[1]));
             Vector2 secondPos = -Vector2.one;
@@ -208,12 +222,17 @@ public class GridMechanics : MonoBehaviour
 
             Vector3 centerOfGroup = gridTiles[(int)firstPos.x, (int)firstPos.y].tile.transform.position + gridTiles[(int)secondPos.x, (int)secondPos.y].tile.transform.position + gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.transform.position;
             centerOfGroup /= 3;
-
             selectionGroup.transform.position = centerOfGroup;
+
+            gridTiles[(int)firstPos.x, (int)firstPos.y].tile.transform.GetChild(0).gameObject.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 255);
+            gridTiles[(int)secondPos.x, (int)secondPos.y].tile.transform.GetChild(0).gameObject.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 255);
+            gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.transform.GetChild(0).gameObject.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 255);
 
             gridTiles[(int)firstPos.x, (int)firstPos.y].tile.transform.SetParent(selectionGroup.transform, true);
             gridTiles[(int)secondPos.x, (int)secondPos.y].tile.transform.SetParent(selectionGroup.transform, true);
             gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.transform.SetParent(selectionGroup.transform, true);
+
+            selectionGroup.transform.position += Vector3.forward * -0.2f;
 
             selectedTiles[0] = firstPos;
             selectedTiles[1] = secondPos;
@@ -441,7 +460,7 @@ public class GridMechanics : MonoBehaviour
                     
 
                     yield return new WaitForSeconds(0.1f);
-                    if (checkForBubble()) 
+                    if (checkForBubbles()) 
                     {
                         
                         
@@ -455,7 +474,7 @@ public class GridMechanics : MonoBehaviour
         }
     }
 
-    private bool checkForBubble()
+    private bool checkForBubbles()
     {
 
         return false;
