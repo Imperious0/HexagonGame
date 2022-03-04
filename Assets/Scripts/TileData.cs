@@ -14,15 +14,11 @@ public class TileData
 
     public int BombCountdown { get => bombCountdown; set { this.tile.GetComponent<TileMechanics>().setBombSituat((value >= 0 ? true : false), value); bombCountdown = value; } }
 
-    ~TileData()
-    {
-        GameObject.Destroy(tile);
-    }
     internal void BubbleIt()
     {
         isBubbled = true;
         this.deSelect();
-        this.tile.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 0);
+        GameObject.Destroy(tile);
 
     }
     internal void Select() 

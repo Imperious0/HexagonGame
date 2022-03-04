@@ -55,9 +55,13 @@ public class TileMechanics : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
-        GameObject.Destroy(this.guiText);
+        GameObject go = Instantiate(GameObject.Find("bubbleEffect"), this.transform.parent, true);
+        go.transform.position = this.transform.position;
+        go.GetComponent<ParticleSystem>().Play();
+
+        GameObject.DestroyImmediate(this.guiText);
     }
     public void setBombSituat(bool isBomb, int bombCounter)
     {

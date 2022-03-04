@@ -18,6 +18,8 @@ public class GridMechanics : MonoBehaviour
     private TextMeshProUGUI scoreText;
     [SerializeField]
     private TextMeshProUGUI highScoreText;
+    [SerializeField]
+    private TextMeshProUGUI movesText;
 
     [Header("Prefabs")]
     [SerializeField]
@@ -39,10 +41,13 @@ public class GridMechanics : MonoBehaviour
     private bool isNextTileBomb = false;
 
     private int _score = 0;
+    private int _moves = 0;
 
     private bool isGameOver = false;
 
     public int Score { get => _score; set { _score = value; scoreText.text = "" +_score; if (PlayerPrefs.GetInt("Highscore", 0) < _score) { this.highScoreText.text = "Highscore: " + _score; PlayerPrefs.SetInt("Highscore", _score); PlayerPrefs.Save(); } } }
+
+    public int Moves { get => _moves; set { _moves = value; movesText.text = "" + _moves; } }
 
     private void Start()
     {
@@ -531,6 +536,7 @@ public class GridMechanics : MonoBehaviour
             //If rotation bubble something so the bombs need countdown and check for is bomb die.
             if(this.selectionGroup == null)
             {
+                this.Moves++;
                 for (int i = 0; i < gSetting.GridSize.x; i++)
                 {
                     for (int j = 0; j < gSetting.GridSize.y; j++)
