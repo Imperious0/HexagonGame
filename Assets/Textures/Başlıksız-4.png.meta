@@ -136,7 +136,7 @@ TextureImporter:
         width: 521
         height: 514
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -157,7 +157,7 @@ TextureImporter:
         width: 514
         height: 391
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -178,7 +178,7 @@ TextureImporter:
         width: 829
         height: 387
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -199,7 +199,7 @@ TextureImporter:
         width: 520
         height: 520
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -220,7 +220,7 @@ TextureImporter:
         width: 519
         height: 517
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -228,6 +228,27 @@ TextureImporter:
       bones: []
       spriteID: b61c6c0e2c4b55c438f042321fdbc782
       internalID: -506649805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "Ba\u015Fl\u0131ks\u0131z-4_0"
+      rect:
+        serializedVersion: 2
+        x: 1545
+        y: 126
+        width: 527
+        height: 519
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5e962b788e3803549814ec9fafffc5a4
+      internalID: -2044321939
       vertices: []
       indices: 
       edges: []
@@ -247,8 +268,8 @@ TextureImporter:
       "Ba\u015Fl\u0131ks\u0131z-4_17": 316653357
       "Ba\u015Fl\u0131ks\u0131z-4_58": -1500455705
       "Ba\u015Fl\u0131ks\u0131z-4_63": 1626673682
-      "Ba\u015Fl\u0131ks\u0131z-4_61": -469703371
-      "Ba\u015Fl\u0131ks\u0131z-4_0": -2044321939
+      "Ba\u015Fl\u0131ks\u0131z-4_54": 906369871
+      "Ba\u015Fl\u0131ks\u0131z-4_21": -1666569531
       "Ba\u015Fl\u0131ks\u0131z-4_62": 51464272
       "Ba\u015Fl\u0131ks\u0131z-4_47": -506649805
       "Ba\u015Fl\u0131ks\u0131z-4_64": 442270219
@@ -277,8 +298,8 @@ TextureImporter:
       "Ba\u015Fl\u0131ks\u0131z-4_35": 682667178
       "Ba\u015Fl\u0131ks\u0131z-4_1": 566065520
       "Ba\u015Fl\u0131ks\u0131z-4_30": -1100191207
-      "Ba\u015Fl\u0131ks\u0131z-4_14": -91167490
       "Ba\u015Fl\u0131ks\u0131z-4_38": 1254434080
+      "Ba\u015Fl\u0131ks\u0131z-4_14": -91167490
       "Ba\u015Fl\u0131ks\u0131z-4_56": 1457136000
       "Ba\u015Fl\u0131ks\u0131z-4_20": 1491334511
       "Ba\u015Fl\u0131ks\u0131z-4_27": -1241569891
@@ -306,8 +327,8 @@ TextureImporter:
       "Ba\u015Fl\u0131ks\u0131z-4_39": 688686609
       "Ba\u015Fl\u0131ks\u0131z-4_7": 1227717158
       "Ba\u015Fl\u0131ks\u0131z-4_2": 80080456
-      "Ba\u015Fl\u0131ks\u0131z-4_54": 906369871
-      "Ba\u015Fl\u0131ks\u0131z-4_21": -1666569531
+      "Ba\u015Fl\u0131ks\u0131z-4_61": -469703371
+      "Ba\u015Fl\u0131ks\u0131z-4_0": -2044321939
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

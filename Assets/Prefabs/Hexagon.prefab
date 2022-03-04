@@ -95,6 +95,7 @@ GameObject:
   - component: {fileID: 6641033629426355810}
   - component: {fileID: 6641033629426355809}
   - component: {fileID: 635764545339355528}
+  - component: {fileID: 3072362053260051718}
   m_Layer: 0
   m_Name: Hexagon
   m_TagString: Tile
@@ -183,3 +184,16 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.5078125
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3072362053260051718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6641033629426355808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6209af3ec1cc49d4c8924d8c8a02ac78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gSetting: {fileID: 11400000, guid: 52ed6313dc5e14b4cbeae55e4c784e5d, type: 2}

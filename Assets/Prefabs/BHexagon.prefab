@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4854469053788498791}
   - component: {fileID: 2949188439035797694}
   - component: {fileID: -4280302456568973019}
+  - component: {fileID: 2582662808333663640}
   m_Layer: 0
   m_Name: BHexagon
   m_TagString: Tile
@@ -75,7 +76,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -506649805, guid: b65dd66a43598ee479a1f79d0c73075e, type: 3}
+  m_Sprite: {fileID: -2044321939, guid: b65dd66a43598ee479a1f79d0c73075e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -99,6 +100,19 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.5078125
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2582662808333663640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 241497878980645296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6209af3ec1cc49d4c8924d8c8a02ac78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gSetting: {fileID: 11400000, guid: 52ed6313dc5e14b4cbeae55e4c784e5d, type: 2}
 --- !u!1 &1984434524185678783
 GameObject:
   m_ObjectHideFlags: 0

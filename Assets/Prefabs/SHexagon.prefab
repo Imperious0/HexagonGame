@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5085909027935810026}
   - component: {fileID: 8303289374655111351}
   - component: {fileID: -964699445219091899}
+  - component: {fileID: 5932826857506051177}
   m_Layer: 0
   m_Name: SHexagon
   m_TagString: Tile
@@ -99,6 +100,19 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.50683594
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5932826857506051177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 787698505453924222}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6209af3ec1cc49d4c8924d8c8a02ac78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gSetting: {fileID: 11400000, guid: 52ed6313dc5e14b4cbeae55e4c784e5d, type: 2}
 --- !u!1 &5257912028787038587
 GameObject:
   m_ObjectHideFlags: 0
