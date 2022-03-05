@@ -35,6 +35,7 @@ public class GridMechanics : MonoBehaviour
     private GameObject selectionGroup;
     private Vector2[] selectedTiles;
 
+    private bool isNeedSelect = false;
     private bool isNeedRotation = false;
     private bool isClockwiseRotation = false;
 
@@ -66,6 +67,14 @@ public class GridMechanics : MonoBehaviour
 
         checkMotions();
 
+    }
+    private void FixedUpdate()
+    {
+        if (isNeedSelect)
+        {
+            selectGroup();
+            isNeedSelect = false;
+        }
     }
     private void Resize(GameObject go)
     {
@@ -120,14 +129,18 @@ public class GridMechanics : MonoBehaviour
     {
         currentMotion = mCapture.CurrentMotion;
 
-        //Debug.LogError(currentMotion);
-
+        if(currentMotion == Motions.Deselect)
+        {
+            isNeedSelect = false;
+            deSelectGroup();
+            return;
+        }
         if ((currentMotion == Motions.None) || isNeedRotation)
             return;
 
         if (currentMotion == Motions.Tap)
         {
-            selectGroup();
+            isNeedSelect = true;
         }
         else
         {
@@ -145,12 +158,12 @@ public class GridMechanics : MonoBehaviour
 
                     float relativeVectorAngle = Vector2.SignedAngle(relativeVector, Vector2.right);
 
-                    Debug.LogError("Angle of relativeVector: " + relativeVectorAngle);
+                    //Debug.LogError("Angle of relativeVector: " + relativeVectorAngle);
                     
                     Vector2 mouseVector = (mCapture.CurrentEndClick - mCapture.CurrentClick).normalized;
                     float relativeAngle = Vector2.SignedAngle(mouseVector, relativeVector);
 
-                    Debug.LogError("Angle Of Mouse Vector around RelativeVector : " + relativeAngle);
+                    //Debug.LogError("Angle Of Mouse Vector around RelativeVector : " + relativeAngle);
 
                     if(relativeAngle < 0) 
                     {
@@ -176,8 +189,6 @@ public class GridMechanics : MonoBehaviour
        
         if (Physics.Raycast(ray, out hit, Mathf.Infinity))
         {
-            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-                return;
             Transform objectHit = hit.transform;
             //TODO now find which will groupped for flipping.
             Camera.main.GetComponent<UIController>().playSfx(SfxTypes.Select);
@@ -573,9 +584,12 @@ public class GridMechanics : MonoBehaviour
             {
                 for (int j = 0; j < gSetting.GridSize.x; j++)
                 {
-                    yield return new WaitWhile(gridTiles[j, i].tile.GetComponent<TileMechanics>().IsNeedMovement);
+                    if(gridTiles[j, i].tile.GetComponent<TileMechanics>().IsNeedMovement())
+                        yield return new WaitWhile(gridTiles[j, i].tile.GetComponent<TileMechanics>().IsNeedMovement);
+                    
                 }
             }
+            yield return new WaitForSeconds(0.5f);
         }
         isNeedRotation = false;
     }
@@ -656,7 +670,7 @@ public class GridMechanics : MonoBehaviour
                 if (isNextTileBomb)
                 {
                     tmpObj = Instantiate(bombTile, gridSystem.transform, false);
-                    bombCountDown = UnityEngine.Random.Range(0, gSetting.BombMaxRange);
+                    bombCountDown = UnityEngine.Random.Range(10, gSetting.BombMaxRange);
                     
                 }
                 else

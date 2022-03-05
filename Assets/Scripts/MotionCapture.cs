@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Motions { None, Tap, Up, Down, Left, Right, Swipe }
+public enum Motions { Deselect, None, Tap, Up, Down, Left, Right, Swipe }
 public class MotionCapture : MonoBehaviour
 {
     [SerializeField]
@@ -20,22 +20,32 @@ public class MotionCapture : MonoBehaviour
     public Vector3 CurrentEndClick { get { return secondPressPos; } }
 
     // Start is called before the first frame update
+
+
     void Start()
     {
-        
     }
 
     // Update is called once per frame
     void Update()
     {
+
         catchMotions();
     }
     private void catchMotions() 
     {
-#if UNITY_IOS || UNITY_ANDROID || UNITY_WP_8_1
+
         if (Input.touches.Length > 0)
         {
             Touch t = Input.GetTouch(0);
+
+            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(t.fingerId))
+            {
+                firstPressPos = Vector2.zero;
+                secondPressPos = Vector2.zero;
+                currentMotion = Motions.Deselect;
+                return;
+            }
 
             if (t.phase == TouchPhase.Began)
             {
@@ -50,7 +60,7 @@ public class MotionCapture : MonoBehaviour
                 // Make sure it was a legit swipe, not a tap
                 if (currentSwipe.magnitude < minSwipeLength)
                 {
-                    currentMotion = Motions.None;
+                    currentMotion = Motions.Tap;
                     return;
                 }
 
@@ -78,50 +88,68 @@ public class MotionCapture : MonoBehaviour
         }
         else
         {
+#if UNITY_ANDROID || UNITY_IOS || UNITY_WP_8_1
             currentMotion = Motions.None;
-        }
 #endif
 #if UNITY_EDITOR
-        if (Input.GetMouseButtonDown(0))
-        {
-            firstPressPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-        }
-        if (Input.GetMouseButtonUp(0))
-        {
-            secondPressPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-
-            currentSwipe = new Vector2(secondPressPos.x - firstPressPos.x, secondPressPos.y - firstPressPos.y);
-
-            if (currentSwipe.magnitude < minSwipeLength)
+            if (Input.GetMouseButtonDown(0))
             {
-                // Click
-                currentMotion = Motions.Tap;
-                return;
+                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                {
+                    firstPressPos = Vector2.zero;
+                    secondPressPos = Vector2.zero;
+                    currentMotion = Motions.Deselect;
+                    return;
+                }
+
+                firstPressPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
             }
-            currentSwipe.Normalize();
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                {
+                    firstPressPos = Vector2.zero;
+                    secondPressPos = Vector2.zero;
+                    currentMotion = Motions.Deselect;
+                    return;
+                }
 
-            currentMotion = Motions.Swipe;
-            /*
-            if (currentSwipe.y > 0 && currentSwipe.x > -0.5f && currentSwipe.x < 0.5f)
-            {
-                // Swipe up
-                currentMotion = Motions.Up;
-            }else if (currentSwipe.y < 0 && currentSwipe.x > -0.5f && currentSwipe.x < 0.5f)
-            {
-                // Swipe down
-                currentMotion = Motions.Down;
-            }else if (currentSwipe.x < 0 && currentSwipe.y > -0.5f && currentSwipe.y < 0.5f)
-            {
-                // Swipe left
-                currentMotion = Motions.Left;
-            }else if (currentSwipe.x > 0 && currentSwipe.y > -0.5f && currentSwipe.y < 0.5f)
-            {
-                // Swipe right
-                currentMotion = Motions.Right;
+                secondPressPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+
+                currentSwipe = new Vector2(secondPressPos.x - firstPressPos.x, secondPressPos.y - firstPressPos.y);
+
+                if (currentSwipe.magnitude < minSwipeLength)
+                {
+                    // Click
+                    currentMotion = Motions.Tap;
+                    return;
+                }
+                currentSwipe.Normalize();
+
+                currentMotion = Motions.Swipe;
+                /*
+                if (currentSwipe.y > 0 && currentSwipe.x > -0.5f && currentSwipe.x < 0.5f)
+                {
+                    // Swipe up
+                    currentMotion = Motions.Up;
+                }else if (currentSwipe.y < 0 && currentSwipe.x > -0.5f && currentSwipe.x < 0.5f)
+                {
+                    // Swipe down
+                    currentMotion = Motions.Down;
+                }else if (currentSwipe.x < 0 && currentSwipe.y > -0.5f && currentSwipe.y < 0.5f)
+                {
+                    // Swipe left
+                    currentMotion = Motions.Left;
+                }else if (currentSwipe.x > 0 && currentSwipe.y > -0.5f && currentSwipe.y < 0.5f)
+                {
+                    // Swipe right
+                    currentMotion = Motions.Right;
+                }
+                */
             }
-            */
-        }
 #endif
+        }
+        
     }
 
     public void resetMotion() 

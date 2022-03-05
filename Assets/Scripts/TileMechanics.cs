@@ -24,13 +24,7 @@ public class TileMechanics : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        gameObject.transform.localScale = Vector3.one * gSetting.ScreenRatio;
     }
 
     private void FixedUpdate()
@@ -43,12 +37,12 @@ public class TileMechanics : MonoBehaviour
         }
         if (!transform.position.Equals(nextGridPosition) && isNeedMovement)
         {
-            movementOffset += Time.deltaTime;
+            movementOffset += Time.fixedDeltaTime;
             
-            this.transform.localPosition = Vector3.Lerp(prevGridPosition, nextGridPosition, movementOffset / gSetting.GameSpeed);
-            if (movementOffset / gSetting.GameSpeed > 1f)
+            this.gameObject.transform.localPosition = Vector3.Lerp(prevGridPosition, nextGridPosition, movementOffset / gSetting.GameSpeed);
+            if ((movementOffset / gSetting.GameSpeed) > 1f)
             {
-                this.transform.localPosition = nextGridPosition;
+                this.gameObject.transform.localPosition = nextGridPosition;
                 movementOffset = 0f;
                 isNeedMovement = false;
             }
@@ -57,9 +51,13 @@ public class TileMechanics : MonoBehaviour
 
     void OnDestroy()
     {
-        GameObject go = Instantiate(GameObject.Find("bubbleEffect"), this.transform.parent, true);
-        go.transform.position = this.transform.position;
-        go.GetComponent<ParticleSystem>().Play();
+        if (GameObject.Find("bubbleEffect"))
+        {
+            GameObject go = Instantiate(GameObject.Find("bubbleEffect"), this.transform.parent, true);
+            go.transform.position = this.transform.position;
+            go.GetComponent<ParticleSystem>().Play();
+        }
+
 
         GameObject.DestroyImmediate(this.guiText);
     }
@@ -85,8 +83,8 @@ public class TileMechanics : MonoBehaviour
     }
     public void setInitialPosition(Vector2 newPosition) 
     {
-        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.5f : 0f), 0f);
-        this.transform.localPosition = nextGridPosition;
+        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.5f * gSetting.ScreenRatio : 0f), 0f);
+        this.gameObject.transform.localPosition = nextGridPosition;
         gridPosition = newPosition;
         this.gameObject.name = gridPosition.x + "x" + gridPosition.y;
 
@@ -94,7 +92,7 @@ public class TileMechanics : MonoBehaviour
     public void changeGridPosition(Vector2 newPosition) 
     {
         prevGridPosition = this.transform.localPosition;
-        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.5f : 0f), 0f);
+        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.5f * gSetting.ScreenRatio : 0f), 0f); 
         gridPosition = newPosition;
         this.gameObject.name = gridPosition.x + "x" + gridPosition.y;
         isNeedMovement = true;

@@ -40,11 +40,6 @@ public class UIController : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
-    {
-        
-    }
-
     public void startNewGame() 
     {
         Camera.main.GetComponent<UIController>().playSfx(SfxTypes.Button);

@@ -13,7 +13,6 @@ public class GameSettings : ScriptableObject
     [SerializeField]
     Vector2 _gridBaseIncrement = new Vector2(1.5f, -1f);
 
-
     [Header("Game Settings")]
     [SerializeField]
     Color32[] _gameColors;
@@ -41,7 +40,7 @@ public class GameSettings : ScriptableObject
 
     public Vector2 GridSize { get => _gridSize; }
     public Vector2 GridOffset { get => _gridOffset;}
-    public Vector2 GridBaseIncrement { get => _gridBaseIncrement;}
+    public Vector2 GridBaseIncrement { get => _gridBaseIncrement * ScreenRatio;}
 
     public Color32[] GameColors { get => _gameColors; set => _gameColors = value; }
     public float GameSpeed { get => maxVal - _gameSpeed;}
@@ -51,4 +50,5 @@ public class GameSettings : ScriptableObject
 
     public int TileBasicScore { get => _tileBasicScore; }
     public int TileRespawnOffset { get => _tileRespawnOffset; }
+    public float ScreenRatio { get => ((Screen.width / 1440f) / (Screen.height / 2560f)); }
 }
