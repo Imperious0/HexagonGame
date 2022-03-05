@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _gridSize: {x: 9, y: 8}
   _gridOffset: {x: 0, y: 0}
-  _gridBaseIncrement: {x: 0.75, y: -1}
+  _gridBaseIncrement: {x: 0.75, y: -0.85}
   _gameColors:
   - serializedVersion: 2
     rgba: 4278190323
@@ -27,7 +27,7 @@ MonoBehaviour:
   - serializedVersion: 2
     rgba: 4279733223
   _gameSpeed: 9.5
-  _rotationSpeed: 8
+  _rotationSpeed: 15
   _tileRespawnOffset: 4
   _bombCounter: 1000
   _bombMaxRange: 50

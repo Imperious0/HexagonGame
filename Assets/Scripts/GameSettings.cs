@@ -22,7 +22,7 @@ public class GameSettings : ScriptableObject
     [SerializeField, Range(0.1f, maxVal)]
     float _gameSpeed = 1f;
 
-    [SerializeField, Range(1, 10)]
+    [SerializeField, Range(1, 20)]
     int _rotationSpeed = 1;
 
     [SerializeField, Range(1, 10)]

@@ -83,7 +83,7 @@ public class TileMechanics : MonoBehaviour
     }
     public void setInitialPosition(Vector2 newPosition) 
     {
-        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.5f * gSetting.ScreenRatio : 0f), 0f);
+        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.425f * gSetting.ScreenRatio : 0f), 0f);
         this.gameObject.transform.localPosition = nextGridPosition;
         gridPosition = newPosition;
         this.gameObject.name = gridPosition.x + "x" + gridPosition.y;
@@ -92,7 +92,7 @@ public class TileMechanics : MonoBehaviour
     public void changeGridPosition(Vector2 newPosition) 
     {
         prevGridPosition = this.transform.localPosition;
-        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.5f * gSetting.ScreenRatio : 0f), 0f); 
+        nextGridPosition = new Vector3(gSetting.GridBaseIncrement.x * newPosition.y, gSetting.GridBaseIncrement.y * newPosition.x + (newPosition.y % 2 == 1 ? -0.425f * gSetting.ScreenRatio : 0f), 0f); 
         gridPosition = newPosition;
         this.gameObject.name = gridPosition.x + "x" + gridPosition.y;
         isNeedMovement = true;
