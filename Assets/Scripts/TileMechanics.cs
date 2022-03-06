@@ -27,7 +27,7 @@ public class TileMechanics : MonoBehaviour
         gameObject.transform.localScale = Vector3.one * gSetting.ScreenRatio;
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
         if (this.guiText != null)
         {
@@ -37,7 +37,7 @@ public class TileMechanics : MonoBehaviour
         }
         if (!transform.position.Equals(nextGridPosition) && isNeedMovement)
         {
-            movementOffset += Time.fixedDeltaTime;
+            movementOffset += Time.deltaTime;
             
             this.gameObject.transform.localPosition = Vector3.Lerp(prevGridPosition, nextGridPosition, movementOffset / gSetting.GameSpeed);
             if ((movementOffset / gSetting.GameSpeed) > 1f)
