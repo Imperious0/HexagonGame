@@ -41,13 +41,9 @@ public class MotionCapture : MonoBehaviour
         {
             Touch t = Input.GetTouch(0);
 
-            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(t.fingerId))
-            {
-                firstPressPos = Vector2.zero;
-                secondPressPos = Vector2.zero;
-                currentMotion = Motions.Deselect;
+            if (checkForGUI(t.fingerId))
                 return;
-            }
+
 
             if (t.phase == TouchPhase.Began)
             {
@@ -96,25 +92,14 @@ public class MotionCapture : MonoBehaviour
 #if UNITY_EDITOR
             if (Input.GetMouseButtonDown(0))
             {
-                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-                {
-                    firstPressPos = Vector2.zero;
-                    secondPressPos = Vector2.zero;
-                    currentMotion = Motions.Deselect;
+                if (checkForGUI())
                     return;
-                }
-
                 firstPressPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
             }
             if (Input.GetMouseButtonUp(0))
             {
-                if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-                {
-                    firstPressPos = Vector2.zero;
-                    secondPressPos = Vector2.zero;
-                    currentMotion = Motions.Deselect;
+                if (checkForGUI())
                     return;
-                }
 
                 secondPressPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
 
@@ -153,7 +138,47 @@ public class MotionCapture : MonoBehaviour
         }
         
     }
+    private bool checkForGUI(int clickID = -1) 
+    {
+        bool isOnGui = true;
+        bool isOverEventSystem = false;
 
+        if (clickID >= 0)
+            isOverEventSystem = UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(clickID);
+        else
+            isOverEventSystem = UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+
+        if (isOverEventSystem)
+        {
+            //We are on GUI
+            if (UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject != null)
+            {
+                // GUI Element Interactable
+                if (UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.CompareTag("TileUI"))
+                {
+                    //Its a game UI so Deny it
+                    isOnGui = false;
+                }
+            }
+            else
+            {
+                //Not interactable GUI Element 
+            }
+        }
+        else
+        {
+            //Not over GUI
+            isOnGui = false;
+        }
+        if(isOnGui)
+        {
+            firstPressPos = Vector2.zero;
+            secondPressPos = Vector2.zero;
+            currentMotion = Motions.Deselect;
+        }
+
+        return isOnGui;
+    }
     public void resetMotion() 
     {
         currentMotion = Motions.None; 

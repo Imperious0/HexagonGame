@@ -72,12 +72,12 @@ public class TileMechanics : MonoBehaviour
             {
                 guiText = Instantiate(GameObject.Find("text_TMP"), GameObject.Find("Canvas").transform, false);
                 guiText.name = this.gameObject.name + "_Text";
-                guiText.GetComponent<TextMeshProUGUI>().text = "" + bombCounter;
+                guiText.GetComponentInChildren<TextMeshProUGUI>().text = "" + bombCounter;
 
             }
             else
             {
-                guiText.GetComponent<TextMeshProUGUI>().text = "" + bombCounter;
+                guiText.GetComponentInChildren<TextMeshProUGUI>().text = "" + bombCounter;
             }
         }
     }

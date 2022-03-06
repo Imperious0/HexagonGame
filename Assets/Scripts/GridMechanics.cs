@@ -536,6 +536,8 @@ public class GridMechanics : MonoBehaviour
                     
                     yield return new WaitForSeconds(0.1f);
 
+                    
+
                     yield return StartCoroutine(checkForBubbles());
 
                     //If rotation catch a bubble so we do deselection and selectionGroup be nulled.
@@ -623,6 +625,30 @@ public class GridMechanics : MonoBehaviour
             }
         }
         //Clear same coords
+        bubbleList = bubbleList.Distinct().ToList();
+        List<Color32> bColors = new List<Color32>();
+        foreach (var item in bubbleList)
+        {
+            if(gridTiles[(int)item.x, (int)item.y].BombCountdown > 0)
+            {
+                bColors.Add(gridTiles[(int)item.x, (int)item.y].tileColor);
+            }
+        }
+
+        bColors = bColors.Distinct().ToList();
+
+        for (int i = 0; i < gSetting.GridSize.x; i++)
+        {
+            for (int j = 0; j < gSetting.GridSize.y; j++)
+            {
+                for (int k = 0; k < bColors.Count; k++)
+                {
+                    if (gridTiles[i, j].tileColor.Equals(bColors[k]))
+                        bubbleList.Add(new Vector2(i, j));
+
+                }
+            }
+        }
         bubbleList = bubbleList.Distinct().ToList();
 
         for (int i = 0; i < bubbleList.Count; i++)
