@@ -17,13 +17,11 @@ public class GameSettings : ScriptableObject
     [SerializeField]
     Color32[] _gameColors;
 
-    const float maxVal = 10f;
-
-    [SerializeField, Range(0.1f, maxVal)]
+    [SerializeField, Range(0.1f, 10f)]
     float _gameSpeed = 1f;
 
-    [SerializeField, Range(1, 20)]
-    int _rotationSpeed = 1;
+    [SerializeField, Range(0f, 10f)]
+    float _rotationSpeed = 1;
 
     [SerializeField, Range(1, 10)]
     int _tileRespawnOffset = 4;
@@ -43,10 +41,10 @@ public class GameSettings : ScriptableObject
     public Vector2 GridBaseIncrement { get => _gridBaseIncrement * ScreenRatio;}
 
     public Color32[] GameColors { get => _gameColors; set => _gameColors = value; }
-    public float GameSpeed { get => maxVal - _gameSpeed;}
+    public float GameSpeed { get => _gameSpeed;}
     public int BombCounter { get => _bombCounter; }
     public int BombMaxRange { get => _bombMaxRange; }
-    public int RotationSpeed { get => _rotationSpeed; }
+    public float RotationSpeed { get => _rotationSpeed; }
 
     public int TileBasicScore { get => _tileBasicScore; }
     public int TileRespawnOffset { get => _tileRespawnOffset; }

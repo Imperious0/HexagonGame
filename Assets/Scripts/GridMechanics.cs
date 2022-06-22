@@ -13,6 +13,8 @@ public class GridMechanics : MonoBehaviour
 
     [SerializeField]
     private GameObject gridSystem;
+    [SerializeField]
+    private UIController uiController;
 
     [SerializeField]
     private TextMeshProUGUI scoreText;
@@ -30,10 +32,30 @@ public class GridMechanics : MonoBehaviour
     private MotionCapture mCapture;
     private Motions currentMotion;
 
-    private TileData [,] gridTiles;
+    private TileData[,] gridTiles;
 
     private GameObject selectionGroup;
     private Vector2[] selectedTiles;
+    private readonly Vector2[] neighbourTiles = new Vector2[] 
+    { 
+        new Vector2(-1, 1), 
+        new Vector2(-1, 0), 
+        new Vector2(-1, -1), 
+        new Vector2(0, -1),
+        new Vector2(1, 0),
+        new Vector2(0, 1),
+    };
+    private readonly Vector2[] neighbourTiles2 = new Vector2[]
+    {
+        new Vector2(0, 1),
+        new Vector2(-1, 0),
+        new Vector2(0, -1),
+        new Vector2(1, -1),
+        new Vector2(1, 0),
+        new Vector2(1, 1),
+    };
+
+    private float lastSelectionAngle = 0f;
 
     private bool isNeedSelect = false;
     private bool isNeedRotation = false;
@@ -53,8 +75,11 @@ public class GridMechanics : MonoBehaviour
     private void Start()
     {
         mCapture = Camera.main.GetComponent<MotionCapture>();
+        selectionGroup = new GameObject("SelectGroup");
+
         selectedTiles = new Vector2[3];
         highScoreText.text = "Highscore: " + PlayerPrefs.GetInt("Highscore", 0);
+
         Resize(GameObject.Find("BG"));
 
         InitializeGrid();
@@ -104,6 +129,8 @@ public class GridMechanics : MonoBehaviour
     private void InitializeGrid()
     {
         gridTiles = new TileData[(int)gSetting.GridSize.x, (int)gSetting.GridSize.y];
+        //Try to Center Grid.
+        transform.position = new Vector3(-((gSetting.GridSize.y - 1) * gSetting.GridBaseIncrement.x) / 2, -((gSetting.GridSize.x - 1) * gSetting.GridBaseIncrement.y) / 2 + 0.5f);
         for (int i = 0; i < gSetting.GridSize.x; i++)
         {
             for (int j = 0; j < gSetting.GridSize.y; j++)
@@ -112,21 +139,23 @@ public class GridMechanics : MonoBehaviour
                 GameObject tmpObj = Instantiate(tiles[selectedTile], gridSystem.transform, false);
 
                 gridTiles[i, j] = new TileData();
-                gridTiles[i, j].tile = tmpObj;
-                gridTiles[i, j].deSelect();
+                gridTiles[i, j].Tile = tmpObj;
+                gridTiles[i, j].TileMechanics.deSelect();
                 gridTiles[i, j].tileColor = gSetting.GameColors[UnityEngine.Random.Range(0, gSetting.GameColors.Length)];
-                gridTiles[i, j].tile.GetComponent<SpriteRenderer>().color = gridTiles[i, j].tileColor;
-                gridTiles[i, j].setInitialPosition(new Vector2(i, j));
+                gridTiles[i, j].Tile.GetComponent<SpriteRenderer>().color = gridTiles[i, j].tileColor;
+                gridTiles[i, j].TileMechanics.setInitialPosition(new Vector2(i, j));
 
                 gridTiles[i, j].Score = gSetting.TileBasicScore * (selectedTile + 1);
             }
         }
-        //Try to Center Grid.
-        transform.position = new Vector3(-((gSetting.GridSize.y - 1) * gSetting.GridBaseIncrement.x) / 2, -((gSetting.GridSize.x - 1) * gSetting.GridBaseIncrement.y) / 2 + 0.5f);
+
         StartCoroutine(checkForBubbles());
     }
     private void checkMotions() 
     {
+        if (isNeedRotation)
+            return;
+
         currentMotion = mCapture.CurrentMotion;
 
         if(currentMotion == Motions.Deselect)
@@ -135,7 +164,7 @@ public class GridMechanics : MonoBehaviour
             deSelectGroup();
             return;
         }
-        if ((currentMotion == Motions.None) || isNeedRotation)
+        if ((currentMotion == Motions.None))
             return;
 
         if (currentMotion == Motions.Tap)
@@ -146,18 +175,17 @@ public class GridMechanics : MonoBehaviour
         {
             //Swipe Event
 
-            if (selectionGroup != null)
+            if (selectionGroup != null && isNeedRotation == false)
             {
-                if (selectionGroup.transform.childCount == 3)
+                if (selectionGroup.transform.position != Vector3.zero)
                 {
                     isNeedRotation = true;
 
                     Vector3 mouseVectorRelative = (mCapture.CurrentEndClick + mCapture.CurrentClick);
                     Vector3 groupCenter = Camera.main.WorldToScreenPoint(selectionGroup.transform.position);
-                    Vector3 relativeVector = ((mouseVectorRelative) - groupCenter * 2f).normalized;
+                    Vector3 relativeVector = (mouseVectorRelative - (groupCenter * 2f)).normalized;
 
-                    float relativeVectorAngle = Vector2.SignedAngle(relativeVector, Vector2.right);
-
+                    //float relativeVectorAngle = Vector2.SignedAngle(relativeVector, Vector2.right);
                     //Debug.LogError("Angle of relativeVector: " + relativeVectorAngle);
                     
                     Vector2 mouseVector = (mCapture.CurrentEndClick - mCapture.CurrentClick).normalized;
@@ -175,7 +203,7 @@ public class GridMechanics : MonoBehaviour
                         //Right Side Sign
                         isClockwiseRotation = true;
                     }
-                   
+                    //Debug.LogError("isClockwise : " + isClockwiseRotation);
                     StartCoroutine(rotateGroup());
                 }
             }
@@ -185,19 +213,23 @@ public class GridMechanics : MonoBehaviour
     private void selectGroup() 
     {
         Ray ray = Camera.main.ScreenPointToRay(mCapture.CurrentClick);
-        RaycastHit hit;
-       
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
-        {
-            Transform objectHit = hit.transform;
-            //TODO now find which will groupped for flipping.
-            Camera.main.GetComponent<UIController>().playSfx(SfxTypes.Select);
+        RaycastHit2D rayHit = Physics2D.GetRayIntersection(ray);
 
-            float clickedAngle = Vector2.SignedAngle(hit.point - objectHit.position, Vector2.right);
+        if (rayHit.transform != null)
+        {
+            Transform objectHit = rayHit.transform;
+            //TODO now find which will groupped for flipping.
+            uiController.playSfx(SfxTypes.Select);
+
+
+            float clickedAngle = -Vector2.SignedAngle((rayHit.point - objectHit.position * Vector2.one), Vector2.right);
+            
+            lastSelectionAngle = clickedAngle;
+
 
             deSelectGroup();
             
-            selectionGroup = new GameObject("SelectGroup");
+
             selectionGroup.transform.position = Vector3.zero;
             selectionGroup.transform.rotation = Quaternion.identity;
 
@@ -207,72 +239,23 @@ public class GridMechanics : MonoBehaviour
             Vector2 secondPos = -Vector2.one;
             Vector2 thirdPos = -Vector2.one;
 
-            RotateDir r = RotateDir.R;
-            if (clickedAngle <= 30 && clickedAngle >= -30)
-            {
-                r = RotateDir.R;
-            }
-            else if (clickedAngle < -30 && clickedAngle > -90)
-            {
-                r = RotateDir.UR;
-            }
-            else if (clickedAngle <= -90 && clickedAngle > -150)
-            {
-                r = RotateDir.UL;
-            }
-            else if (clickedAngle <= -150 || clickedAngle >= 150)
-            {
-                r = RotateDir.L;
-            }
-            else if (clickedAngle > 30 && clickedAngle < 90)
-            {
-                //Right DOWN Select
-                r = RotateDir.RD;
-            }
-            else if (clickedAngle >= 90 && clickedAngle < 150)
-            {
-                //Left DOWN Select
-                r = RotateDir.LD;
-            }
 
-            Vector3[] clCount = calculateGroup(firstPos, r, true);
-            Vector3[] cClCount = calculateGroup(firstPos, r, false);
+            int selectedIndex = calculateSelectionIndex(lastSelectionAngle);
+            Vector3[] selCount = calculateGroup(firstPos, selectedIndex, true);
 
-            if (clCount[0].z == 0)
-            {
-                secondPos = clCount[0];
-                thirdPos = clCount[1];
-            }
-            else if (clCount[0].z < cClCount[0].z)
-            {
-                secondPos = clCount[0];
-                thirdPos = clCount[1];
-            }
-            else if (cClCount[0].z < clCount[0].z)
-            {
-                secondPos = cClCount[0];
-                thirdPos = cClCount[1];
-            }
-            else
-            {
-                secondPos = clCount[0];
-                thirdPos = clCount[1];
-            }
+            secondPos = selCount[0];
+            thirdPos = selCount[1];
 
             //Center the selected group
-            Vector3 centerOfGroup = gridTiles[(int)firstPos.x, (int)firstPos.y].tile.transform.position + gridTiles[(int)secondPos.x, (int)secondPos.y].tile.transform.position + gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.transform.position;
+            Vector3 centerOfGroup = gridTiles[(int)firstPos.x, (int)firstPos.y].Tile.transform.localPosition + gridTiles[(int)secondPos.x, (int)secondPos.y].Tile.transform.localPosition + gridTiles[(int)thirdPos.x, (int)thirdPos.y].Tile.transform.localPosition;
             centerOfGroup /= 3;
-            selectionGroup.transform.position = centerOfGroup;
+            selectionGroup.transform.localPosition = centerOfGroup;
 
             //Select the tiles
-            gridTiles[(int)firstPos.x, (int)firstPos.y].Select();
-            gridTiles[(int)secondPos.x, (int)secondPos.y].Select();
-            gridTiles[(int)thirdPos.x, (int)thirdPos.y].Select();
+            gridTiles[(int)firstPos.x, (int)firstPos.y].TileMechanics.Select();
+            gridTiles[(int)secondPos.x, (int)secondPos.y].TileMechanics.Select();
+            gridTiles[(int)thirdPos.x, (int)thirdPos.y].TileMechanics.Select();
 
-            //Push tiles to selected group
-            gridTiles[(int)firstPos.x, (int)firstPos.y].tile.transform.SetParent(selectionGroup.transform, true);
-            gridTiles[(int)secondPos.x, (int)secondPos.y].tile.transform.SetParent(selectionGroup.transform, true);
-            gridTiles[(int)thirdPos.x, (int)thirdPos.y].tile.transform.SetParent(selectionGroup.transform, true);
 
             //Little bit zoom in to selected group
             selectionGroup.transform.position += Vector3.forward * -0.2f;
@@ -286,268 +269,196 @@ public class GridMechanics : MonoBehaviour
         }
         else
         {
+            deSelectGroup();
             Debug.DrawRay(ray.origin, ray.direction * 20f, Color.red, 100f);
         }
     }
-    private Vector3[] calculateGroup(Vector2 selectedPos, RotateDir dir, bool isClockwise) 
+    private int calculateSelectionIndex(float angle)
     {
+        int index = -1;
+
+        if (angle < 30f && angle > -30f)
+            index = 0;
+
+        if (index == 0)
+            return index;
+
+        if (angle < 0f)
+            angle += 360f;
+
+        angle %= 360f;
+
+
+        float approxAngle = 30f;
+        float incrementAmount = 60f;
+        for (int i = 1; i < 6; i++)
+        {
+            if(angle > approxAngle && angle < approxAngle + incrementAmount )
+            {
+                index = i;
+                break;
+            }
+            approxAngle += incrementAmount;
+        }
+
+        return index;
+    }
+    private Vector3[] calculateGroup(Vector2 selectedPos, int index, bool isClockwise)
+    {
+        Vector3[] result;
+
         Vector2 secondPos = -Vector2.one;
         Vector2 thirdPos = -Vector2.one;
-        Vector3[] result = new Vector3[2];
-        int cycleDone = 0;
+        
+        Vector2[] currentLineup;
 
-        if(selectedPos.y % 2 == 0) 
+        if(selectedPos.y % 2 == 0)
         {
-            secondPos = selectedPos;
-            thirdPos = selectedPos;
-
-            switch (dir)
+            currentLineup = neighbourTiles;      
+        }
+        else
+        {
+            currentLineup = neighbourTiles2;
+        }
+        int[] lookingIndex = new int[currentLineup.Length];
+        if(isClockwise)
+        {
+            int tmpIndex = 0;
+            for (int i = index; i > -1; i--)
             {
-                case RotateDir.R:
-                    secondPos.y += 1;
-
-                    thirdPos.y += 1;
-                    thirdPos.x -= 1;
-                    break;
-                case RotateDir.UR:
-                    secondPos.y += 1;
-                    secondPos.x -= 1;
-
-                    thirdPos.x -= 1;
-                    break;
-                case RotateDir.UL:
-                    secondPos.x -= 1;
-
-                    thirdPos.x -= 1;
-                    thirdPos.y -= 1;
-
-                    break;
-                case RotateDir.L:
-                    secondPos.x -= 1;
-                    secondPos.y -= 1;
-
-                    thirdPos.y -= 1;
-                    break;
-                case RotateDir.LD:
-                    secondPos.y -= 1;
-
-                    thirdPos.x += 1;
-                    break;
-                case RotateDir.RD:
-                    secondPos.x += 1;
-
-                    thirdPos.y += 1;
-                    break;
+                lookingIndex[tmpIndex] = i;
+                tmpIndex++;
+            }
+            for (int i = currentLineup.Length - 1; i > index; i--)
+            {
+                lookingIndex[tmpIndex] = i;
+                tmpIndex++;
             }
         }
         else 
         {
-            secondPos = selectedPos;
-            thirdPos = selectedPos;
-
-            switch (dir)
+            int tmpIndex = 0;
+            for (int i = index; i < currentLineup.Length; i++)
             {
-                case RotateDir.R:
-                    secondPos.x += 1;
-                    secondPos.y += 1;
-
-                    thirdPos.y += 1;
-
-                    break;
-                case RotateDir.UR:
-                    secondPos.y += 1;
-
-                    thirdPos.x -= 1;
-
-                    break;
-                case RotateDir.UL:
-                    secondPos.x -= 1;
-
-                    thirdPos.y -= 1;
-                    break;
-                case RotateDir.L:
-                    secondPos.y -= 1;
-
-                    thirdPos.x += 1;
-                    thirdPos.y -= 1;
-
-                    break;
-                case RotateDir.LD:
-                    secondPos.x += 1;
-                    secondPos.y -= 1;
-
-                    thirdPos.x += 1;
-                    break;
-                case RotateDir.RD:
-                    secondPos.x += 1;
-
-                    thirdPos.x += 1;
-                    thirdPos.y += 1;
-                    break;
+                lookingIndex[tmpIndex] = i;
+                tmpIndex++;
+            }
+            for (int i = 0; i < index; i++)
+            {
+                lookingIndex[tmpIndex] = i;
+                tmpIndex++;
             }
         }
-        try
+
+        for (int i = 0; i < lookingIndex.Length; i++)
         {
-            TileData t = gridTiles[(int)secondPos.x, (int)secondPos.y];
-            t = gridTiles[(int)thirdPos.x, (int)thirdPos.y];
-            result[0] = secondPos;
-            result[1] = thirdPos;
-        }
-        catch (Exception e)
-        {
-            secondPos = -Vector2.one;
-            thirdPos = -Vector2.one;
+            int secondIndex = lookingIndex[i] - 1;
+            int thirdIndex = lookingIndex[i];
+            if (secondIndex < 0)
+                secondIndex = lookingIndex.Length - 1;
+
+            if (selectedPos.x + currentLineup[secondIndex].x < 0 || selectedPos.x + currentLineup[secondIndex].x >= gridTiles.GetLength(0))
+                continue;
+            if (selectedPos.y + currentLineup[secondIndex].y < 0 || selectedPos.y + currentLineup[secondIndex].y >= gridTiles.GetLength(1))
+                continue;
+            if (selectedPos.x + currentLineup[thirdIndex].x < 0 || selectedPos.x + currentLineup[thirdIndex].x >= gridTiles.GetLength(0))
+                continue;
+            if (selectedPos.y + currentLineup[thirdIndex].y < 0 || selectedPos.y + currentLineup[thirdIndex].y >= gridTiles.GetLength(1))
+                continue;
+
+            secondPos = selectedPos + currentLineup[secondIndex];
+            thirdPos = selectedPos + currentLineup[thirdIndex];
+            break;
         }
 
-        if(secondPos == -Vector2.one || thirdPos == -Vector2.one) 
-        {
-            //Cant Find Yet
-
-            if (isClockwise)
-            {
-                if (dir == RotateDir.R)
-                    dir = RotateDir.RD;
-                else if (dir == RotateDir.RD)
-                    dir = RotateDir.LD;
-                else if (dir == RotateDir.LD)
-                    dir = RotateDir.L;
-                else if (dir == RotateDir.L)
-                    dir = RotateDir.UL;
-                else if (dir == RotateDir.UL)
-                    dir = RotateDir.UR;
-                else if (dir == RotateDir.UR)
-                    dir = RotateDir.R;
-            }
-            else
-            {
-                if (dir == RotateDir.R)
-                    dir = RotateDir.UR;
-                else if (dir == RotateDir.UR)
-                    dir = RotateDir.UL;
-                else if (dir == RotateDir.UL)
-                    dir = RotateDir.L;
-                else if (dir == RotateDir.L)
-                    dir = RotateDir.LD;
-                else if (dir == RotateDir.LD)
-                    dir = RotateDir.RD;
-                else if (dir == RotateDir.RD)
-                    dir = RotateDir.R;
-            }
-            cycleDone++;
-            result = calculateGroup(selectedPos, dir, isClockwise);
-            result[0].z += cycleDone;
-            result[1].z += cycleDone;
-        }
-        else 
-        {
-            cycleDone++;
-            result[0].z += cycleDone;
-            result[1].z += cycleDone;
-        }
-
+        result = new Vector3[] { secondPos, thirdPos };
         return result;
+
     }
     private void deSelectGroup() 
     {
-        if (selectionGroup != null)
+        if (selectionGroup.transform.position != Vector3.zero)
         {
-            foreach (Transform to in selectionGroup.transform.GetComponentsInChildren<Transform>())
-            {
-                if (to.gameObject.CompareTag("Tile"))
-                {
-                    to.SetParent(gridSystem.transform, true);
-                    to.position = new Vector3(to.position.x, to.position.y, 0);
-                    to.rotation = Quaternion.identity;
-                }
-
-                if (to.gameObject.CompareTag("TileBackmask"))
-                    to.gameObject.GetComponent<SpriteRenderer>().color = new Color32(255, 255, 255, 0);
-            }
-            GameObject.Destroy(selectionGroup);
+            gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y].TileMechanics.deSelect();
+            gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y].TileMechanics.deSelect();
+            gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y].TileMechanics.deSelect();
+            selectionGroup.transform.position = Vector3.zero;
         }
     }
     private IEnumerator rotateGroup()
     {
         if(isNeedRotation)
         {
-
-            do {
-                if (isClockwiseRotation)
-                    selectionGroup.transform.Rotate(Vector3.forward, -gSetting.RotationSpeed);
-                else
-                    selectionGroup.transform.Rotate(Vector3.forward, gSetting.RotationSpeed);
-
-                yield return new WaitForFixedUpdate();
-
-
-                float absZAngle = Mathf.Abs(this.selectionGroup.transform.rotation.eulerAngles.z);
-
-                if (isClockwiseRotation)
-                    absZAngle = 360f - absZAngle;
-
-                if((absZAngle % 120f) + gSetting.RotationSpeed + 1 >= 120f)
+            float angle = isClockwiseRotation ? 120f : -120f;
+            for (int i = 1; i < 4; i++)
+            {
+                float currentAngle = angle * i;
+                Quaternion prev = selectionGroup.transform.rotation;
+                float currentFrame = 0f;
+                float interpolation = 0f;
+                do
                 {
-                  
-                    float newRotationSpeed = 120f - (absZAngle % 120f);
+                    currentFrame += Time.deltaTime * gSetting.RotationSpeed;
+                    interpolation = Mathf.Lerp(0, 1, currentFrame);
 
-                    if (isClockwiseRotation)
-                        selectionGroup.transform.Rotate(Vector3.forward, -newRotationSpeed);
-                    else
-                        selectionGroup.transform.Rotate(Vector3.forward, newRotationSpeed);
+                    Quaternion qu = Quaternion.Lerp(prev, Quaternion.Euler(Vector3.forward * currentAngle), interpolation);
 
-                    Camera.main.GetComponent<UIController>().playSfx(SfxTypes.Bubble);
+                    gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y].Tile.transform.RotateAround(
+                        selectionGroup.transform.position, 
+                        Vector3.forward ,
+                        Quaternion.Angle(selectionGroup.transform.rotation, qu) * (isClockwiseRotation ? -1f : 1f)
+                        );;
+                    gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y].Tile.transform.RotateAround(
+                        selectionGroup.transform.position, 
+                        Vector3.forward,
+                        Quaternion.Angle(selectionGroup.transform.rotation, qu) * (isClockwiseRotation ? -1f : 1f)
+                        );
+                    gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y].Tile.transform.RotateAround(
+                        selectionGroup.transform.position,
+                        Vector3.forward,
+                        Quaternion.Angle(selectionGroup.transform.rotation, qu) * (isClockwiseRotation ? -1f : 1f)
+                    );
 
-                    if (isClockwiseRotation) 
-                    {
-                        TileData tmp;
-                        tmp = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
+                    selectionGroup.transform.rotation = qu;
+                    yield return new WaitForEndOfFrame();
 
-                        gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
-                        gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
-                        gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = tmp;
 
-                        selectionGroup.transform.GetChild(0).name = selectedTiles[1].x + "x" + selectedTiles[1].y;
-                        selectionGroup.transform.GetChild(1).name = selectedTiles[2].x + "x" + selectedTiles[2].y;
-                        selectionGroup.transform.GetChild(2).name = selectedTiles[0].x + "x" + selectedTiles[0].y;
-                       
-                        Vector2 tmpVector = selectedTiles[2];
-                        selectedTiles[2] = selectedTiles[0];
-                        selectedTiles[0] = selectedTiles[1];
-                        selectedTiles[1] = tmpVector;
-                    }
-                    else 
-                    {
-                        TileData tmp;
-                        tmp = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
+                } while (!(interpolation >= 1f));
+                if (isClockwiseRotation)
+                {
+                    TileData tmp;
+                    tmp = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
 
-                        gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
-                        gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
-                        gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = tmp;
+                    gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
+                    gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
+                    gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = tmp;
 
-                        selectionGroup.transform.GetChild(0).name = selectedTiles[2].x + "x" + selectedTiles[2].y;
-                        selectionGroup.transform.GetChild(1).name = selectedTiles[0].x + "x" + selectedTiles[0].y;
-                        selectionGroup.transform.GetChild(2).name = selectedTiles[1].x + "x" + selectedTiles[1].y;
-                       
-                        Vector2 tmpVector = selectedTiles[1];
-                        selectedTiles[1] = selectedTiles[0];
-                        selectedTiles[0] = selectedTiles[2];
-                        selectedTiles[2] = tmpVector;
-                    }
-                    
-                    yield return new WaitForSeconds(0.1f);
-
-                    
-
-                    yield return StartCoroutine(checkForBubbles());
-
-                    //If rotation catch a bubble so we do deselection and selectionGroup be nulled.
-                    if (this.selectionGroup == null)
-                        break;
                 }
-            } while (!(Mathf.Abs( this.selectionGroup.transform.rotation.eulerAngles.z % 360f) < 0.1f));
+                else
+                {
+                    TileData tmp;
+                    tmp = gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y];
+
+                    gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y] = gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y];
+                    gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y] = gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y];
+                    gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y] = tmp;
+
+                }
+                gridTiles[(int)selectedTiles[0].x, (int)selectedTiles[0].y].TileMechanics.changeGridPosition(selectedTiles[0], true);
+                gridTiles[(int)selectedTiles[1].x, (int)selectedTiles[1].y].TileMechanics.changeGridPosition(selectedTiles[1], true);
+                gridTiles[(int)selectedTiles[2].x, (int)selectedTiles[2].y].TileMechanics.changeGridPosition(selectedTiles[2], true);
+
+                yield return new WaitForSeconds(0.1f);
+
+                yield return StartCoroutine(checkForBubbles());
+
+                //If rotation catch a bubble so we do deselection and selectionGroup be nulled.
+                if (this.selectionGroup.transform.position == Vector3.zero)
+                    break;
+            }
 
             //If rotation bubble something so the bombs need countdown and check for is bomb die.
-            if(this.selectionGroup == null)
+            if (this.selectionGroup.transform.position == Vector3.zero)
             {
                 this.Moves++;
                 for (int i = 0; i < gSetting.GridSize.x; i++)
@@ -573,11 +484,11 @@ public class GridMechanics : MonoBehaviour
             isClockwiseRotation = false;
         }
     }
+
     private IEnumerator checkForBubbles() 
     {
-        //while bubbling interactions disabled
-        isNeedRotation = true;
 
+        yield return new WaitForSeconds(0.1f);
         while (BubbleIt())
         {
             deSelectGroup();
@@ -586,14 +497,13 @@ public class GridMechanics : MonoBehaviour
             {
                 for (int j = 0; j < gSetting.GridSize.x; j++)
                 {
-                    if(gridTiles[j, i].tile.GetComponent<TileMechanics>().IsNeedMovement())
-                        yield return new WaitWhile(gridTiles[j, i].tile.GetComponent<TileMechanics>().IsNeedMovement);
+                    if(gridTiles[j, i].TileMechanics.IsNeedMovement())
+                        yield return new WaitWhile(gridTiles[j, i].TileMechanics.IsNeedMovement);
                     
                 }
             }
             yield return new WaitForSeconds(0.5f);
         }
-        isNeedRotation = false;
     }
 
     private bool BubbleIt()
@@ -605,27 +515,24 @@ public class GridMechanics : MonoBehaviour
         {
             for (int j = 0; j < gSetting.GridSize.y; j++)
             {
-                Vector3[] selections = calculateGroup(new Vector2(i, j), RotateDir.R, true);
-                Vector3[] rSelections = calculateGroup(new Vector2(i, j), RotateDir.L, true);
-
-                if(gridTiles[i, j].tileColor.Equals(gridTiles[(int)selections[0].x, (int)selections[0].y].tileColor)
+                for (int k = 0; k < 6; k++)
+                {
+                    Vector3[] selections = calculateGroup(new Vector2(i, j), k, false);
+                    if (gridTiles[i, j].tileColor.Equals(gridTiles[(int)selections[0].x, (int)selections[0].y].tileColor)
                     && gridTiles[(int)selections[0].x, (int)selections[0].y].tileColor.Equals(gridTiles[(int)selections[1].x, (int)selections[1].y].tileColor))
-                {
-                    bubbleList.Add(new Vector2(i, j));
-                    bubbleList.Add(selections[0]);
-                    bubbleList.Add(selections[1]);
+                    {
+                        bubbleList.Add(new Vector2(i, j));
+                        bubbleList.Add(selections[0]);
+                        bubbleList.Add(selections[1]);
+                    }
                 }
-                if (gridTiles[i, j].tileColor.Equals(gridTiles[(int)rSelections[0].x, (int)rSelections[0].y].tileColor)
-                    && gridTiles[(int)rSelections[0].x, (int)rSelections[0].y].tileColor.Equals(gridTiles[(int)rSelections[1].x, (int)rSelections[1].y].tileColor))
-                {
-                    bubbleList.Add(new Vector2(i, j));
-                    bubbleList.Add(rSelections[0]);
-                    bubbleList.Add(rSelections[1]);
-                }
+                
             }
         }
         //Clear same coords
         bubbleList = bubbleList.Distinct().ToList();
+
+        //Find Bomb Tiles
         List<Color32> bColors = new List<Color32>();
         foreach (var item in bubbleList)
         {
@@ -634,9 +541,10 @@ public class GridMechanics : MonoBehaviour
                 bColors.Add(gridTiles[(int)item.x, (int)item.y].tileColor);
             }
         }
-
+        
         bColors = bColors.Distinct().ToList();
 
+        //Add Bomb Color Tiles
         for (int i = 0; i < gSetting.GridSize.x; i++)
         {
             for (int j = 0; j < gSetting.GridSize.y; j++)
@@ -651,6 +559,9 @@ public class GridMechanics : MonoBehaviour
         }
         bubbleList = bubbleList.Distinct().ToList();
 
+        if (bubbleList.Count > 0)
+            deSelectGroup();
+
         for (int i = 0; i < bubbleList.Count; i++)
         {
             gridTiles[(int)bubbleList[i].x, (int)bubbleList[i].y].BubbleIt();
@@ -660,13 +571,14 @@ public class GridMechanics : MonoBehaviour
             }
             this.Score += gridTiles[(int)bubbleList[i].x, (int)bubbleList[i].y].Score;
         }
+
         if (bubbleList.Count > 0)
             isNeedBubble = true;
         else
             isNeedBubble = false;
 
         if(isNeedBubble)
-            Camera.main.GetComponent<UIController>().playSfx(SfxTypes.BubbleScs);
+            uiController.playSfx(SfxTypes.BubbleScs);
 
         return isNeedBubble;
     }
@@ -706,13 +618,13 @@ public class GridMechanics : MonoBehaviour
                 }
 
                 TileData tmp = new TileData();
-                tmp.tile = tmpObj;
-                tmp.deSelect();
+                tmp.Tile = tmpObj;
+                tmp.TileMechanics.deSelect();
                 tmp.BombCountdown = bombCountDown;
                 tmp.tileColor = gSetting.GameColors[UnityEngine.Random.Range(0, gSetting.GameColors.Length)];
-                tmp.tile.GetComponent<SpriteRenderer>().color = tmp.tileColor;
+                tmp.Tile.GetComponent<SpriteRenderer>().color = tmp.tileColor;
 
-                tmp.setInitialPosition(new Vector2(-(startOffset - index), i));
+                tmp.TileMechanics.setInitialPosition(new Vector2(-(startOffset - index), i));
 
                 tmp.Score = gSetting.TileBasicScore * (selectedTile + 1);
                 
@@ -728,17 +640,16 @@ public class GridMechanics : MonoBehaviour
             for (int j = 0; j < gSetting.GridSize.x; j++)
             {
                 gridTiles[j, i] = column[j];
-                gridTiles[j, i].changeGridPosition(new Vector2(j, i));
+                gridTiles[j, i].TileMechanics.changeGridPosition(new Vector2(j, i));
             }
         }
     }
 
     private void setGameOver() 
     {
-        Camera.main.GetComponent<UIController>().showGGMenu();
+        uiController.showGGMenu();
         isGameOver = true;
     }
 }
 
 public enum RotateDir { R, UR, UL, L, LD, RD }
-

@@ -26,8 +26,8 @@ MonoBehaviour:
     rgba: 4282814512
   - serializedVersion: 2
     rgba: 4279733223
-  _gameSpeed: 9.5
-  _rotationSpeed: 15
+  _gameSpeed: 2
+  _rotationSpeed: 6
   _tileRespawnOffset: 4
   _bombCounter: 1000
   _bombMaxRange: 50
