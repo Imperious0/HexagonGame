@@ -25,5 +25,6 @@ public class MusicManager : MonoBehaviour
         {
             DestroyImmediate(gameObject);
         }
+
     }
 }
